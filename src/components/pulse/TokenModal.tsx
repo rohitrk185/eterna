@@ -51,10 +51,12 @@ const TokenModal = memo(() => {
               {token.imageUrl ? (
                 <Image
                   src={token.imageUrl}
-                  alt={token.name}
+                  alt={`${token.name} logo`}
                   fill
+                  sizes="48px"
                   className="object-cover"
-                  unoptimized
+                  loading="eager"
+                  quality={90}
                 />
               ) : (
                 <div className="h-full w-full bg-muted flex items-center justify-center text-sm font-medium">

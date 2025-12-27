@@ -146,7 +146,7 @@ export class MockWebSocket {
     }
 
     try {
-      let message: { type?: string; channel?: string; tokens?: string[] };
+      let message: { type?: string; channel?: string; tokens?: string[]; initialPrices?: Record<string, number> };
       if (typeof data === 'string') {
         message = JSON.parse(data);
       } else {
@@ -159,12 +159,24 @@ export class MockWebSocket {
       // Handle subscription messages
       if (message.type === 'subscribe' && message.channel === 'price') {
         this.subscribedTokens = message.tokens || [];
+        
+        // Get initial prices from message if provided (from Redux store)
+        const initialPrices = message.initialPrices || {};
 
         // Initialize prices for subscribed tokens
         message.tokens?.forEach((address: string) => {
           if (!this.tokenPrices.has(address)) {
-            // Fetch initial price from Birdeye API
-            this.fetchInitialPrice(address);
+            // Use initial price from Redux store if available
+            if (initialPrices[address] && initialPrices[address] > 0) {
+              this.tokenPrices.set(address, initialPrices[address]);
+              // Initialize price history with current price
+              this.priceHistory.set(address, [initialPrices[address]]);
+            } else {
+              // Fallback: use random price (no API call to avoid rate limiting)
+              const fallbackPrice = 0.01 + Math.random() * 100;
+              this.tokenPrices.set(address, fallbackPrice);
+              this.priceHistory.set(address, [fallbackPrice]);
+            }
             // Set volatility based on token (newer tokens = higher volatility)
             this.volatility.set(address, 0.01 + Math.random() * 0.05);
           }
@@ -182,33 +194,8 @@ export class MockWebSocket {
     }
   }
 
-  /**
-   * Fetch initial price from Birdeye API via Next.js API route
-   */
-  private async fetchInitialPrice(address: string) {
-    try {
-      // Use Next.js API route to keep API key server-side
-      const response = await fetch(`/api/token/price?address=${address}`);
-      
-      if (!response.ok) {
-        throw new Error(`API error: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      const price = data.data?.value;
-      
-      if (price && price > 0) {
-        this.tokenPrices.set(address, price);
-      } else {
-        throw new Error('Invalid price data');
-      }
-    } catch (error) {
-      console.error(`Failed to fetch initial price for ${address}:`, error);
-      // Fallback to random price if API fails
-      const fallbackPrice = 0.01 + Math.random() * 100;
-      this.tokenPrices.set(address, fallbackPrice);
-    }
-  }
+  // Removed fetchInitialPrice - we now use prices from Redux store
+  // This prevents repeated API calls and rate limiting
 
   /**
    * Close WebSocket connection

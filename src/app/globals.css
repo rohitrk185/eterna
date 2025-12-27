@@ -16,9 +16,20 @@
     color: hsl(0 84% 60%);
   }
   
-  /* Smooth transitions for price changes */
+  /* Smooth transitions for price changes - optimized for performance */
   .price-transition {
     transition: color 0.3s ease-in-out;
+    will-change: color; /* Optimize for compositor */
+  }
+  
+  /* Optimize animations - use GPU acceleration */
+  .animate-pulse {
+    will-change: opacity;
+  }
+  
+  /* Optimize hover effects */
+  .transition-all {
+    will-change: transform, opacity;
   }
   
   /* Screen reader only - visually hidden but accessible to assistive tech */

@@ -1,18 +1,30 @@
 'use client';
 
-import React, { useMemo, useEffect } from 'react';
+import React, { useMemo } from 'react';
+import dynamic from 'next/dynamic';
 import { useAppSelector } from '@/store/hooks';
 import TokenColumn from '@/components/pulse/TokenColumn';
-import { TokenModalProvider } from '@/components/pulse/TokenModalProvider';
 import { useTokenData } from '@/hooks/useTokenData';
-import { useWebSocket } from '@/hooks/useWebSocket';
 import { LiveRegion } from '@/components/shared/LiveRegion';
+
+// Dynamic imports for code splitting - load these after initial render
+const TokenModalProvider = dynamic(
+  () => import('@/components/pulse/TokenModalProvider').then((mod) => ({ default: mod.TokenModalProvider })),
+  { ssr: false }
+);
+
+// Lazy load WebSocket connection component
+const WebSocketConnector = dynamic(
+  () => import('@/components/pulse/WebSocketConnector').then((mod) => ({ default: mod.WebSocketConnector })),
+  { ssr: false }
+);
 
 /**
  * Pulse Page - Main token discovery table page
  * Three-column layout: New Pairs, Final Stretch, Migrated
  */
 export default function PulsePage() {
+
   // Fetch tokens once (Birdeye API doesn't support category filtering)
   // We'll distribute tokens across categories after fetching
   // Only make ONE API call to avoid rate limiting
@@ -41,24 +53,6 @@ export default function PulsePage() {
     };
   }, [allTokens]);
 
-  // Get all token addresses for WebSocket subscription
-  const allTokenAddresses = useMemo(() => {
-    return allTokens.map((token) => token.address).filter(Boolean);
-  }, [allTokens]);
-
-  // Set up WebSocket for real-time price updates
-  const { subscribe, isConnected } = useWebSocket({
-    autoReconnect: true,
-    reconnectInterval: 3000,
-  });
-
-  // Subscribe to all tokens when addresses are available
-  useEffect(() => {
-    if (allTokenAddresses.length > 0 && isConnected) {
-      subscribe(allTokenAddresses);
-    }
-  }, [allTokenAddresses, isConnected, subscribe]);
-
   return (
     <div className="min-h-screen bg-background">
       {/* Screen reader announcements */}
@@ -71,12 +65,6 @@ export default function PulsePage() {
           <h1 className="text-3xl font-bold text-foreground mb-2">Pulse</h1>
           <div className="flex items-center gap-4 text-sm text-muted-foreground">
             <span>Real-time token discovery</span>
-            {isConnected && (
-              <span className="flex items-center gap-1">
-                <span className="h-2 w-2 rounded-full bg-green-500 animate-pulse" />
-                Live
-              </span>
-            )}
           </div>
         </div>
 
@@ -105,8 +93,11 @@ export default function PulsePage() {
         </div>
       </main>
 
-      {/* Global Modal Provider */}
+      {/* Global Modal Provider - Loaded after initial render */}
       <TokenModalProvider />
+      
+      {/* WebSocket Connector - Deferred to improve LCP */}
+      <WebSocketConnector />
     </div>
   );
 }

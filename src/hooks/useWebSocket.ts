@@ -17,7 +17,7 @@ interface UseWebSocketOptions {
 
 interface UseWebSocketReturn {
   isConnected: boolean;
-  subscribe: (tokenAddresses: string[]) => void;
+  subscribe: (tokenAddresses: string[], initialPrices?: Record<string, number>) => void;
   unsubscribe: (tokenAddresses: string[]) => void;
   disconnect: () => void;
   reconnect: () => void;
@@ -119,8 +119,9 @@ export function useWebSocket(
   }, [url, autoReconnect, reconnectInterval, onConnect, onDisconnect, onError, dispatch]);
 
   // Subscribe to token price updates
+  // initialPrices: optional map of address -> price to avoid API calls
   const subscribe = useCallback(
-    (tokenAddresses: string[]) => {
+    (tokenAddresses: string[], initialPrices?: Record<string, number>) => {
       subscribedTokensRef.current = Array.from(
         new Set([...subscribedTokensRef.current, ...tokenAddresses])
       );
@@ -131,6 +132,7 @@ export function useWebSocket(
             type: 'subscribe',
             channel: 'price',
             tokens: subscribedTokensRef.current,
+            initialPrices: initialPrices || {}, // Pass initial prices to avoid API calls
           })
         );
       } else if (!wsRef.current || wsRef.current.readyState === WebSocket.CLOSED) {

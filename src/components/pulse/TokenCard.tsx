@@ -97,11 +97,13 @@ const TokenCard = memo(({ token, onHover }: TokenCardProps) => {
             {token.imageUrl && !imageError ? (
               <Image
                 src={token.imageUrl}
-                alt={token.name}
+                alt={`${token.name} logo`}
                 fill
+                sizes="32px"
                 className="object-cover"
-                unoptimized
+                loading="lazy"
                 onError={handleImageError}
+                quality={85}
               />
             ) : (
               <div className="h-full w-full bg-muted flex items-center justify-center text-xs text-muted-foreground">
