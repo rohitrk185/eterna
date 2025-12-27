@@ -44,6 +44,7 @@ export function useWebSocket(
   const wsRef = useRef<WebSocket | null>(null);
   const subscribedTokensRef = useRef<string[]>([]);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const initialPricesRef = useRef<Record<string, number>>({});
   const [isConnected, setIsConnected] = useState(false);
 
   // Cleanup function
@@ -76,8 +77,16 @@ export function useWebSocket(
         onConnect?.();
 
         // Resubscribe to tokens if we had any subscriptions
-        if (subscribedTokensRef.current.length > 0) {
-          subscribe(subscribedTokensRef.current);
+        // Send directly to avoid circular dependency with subscribe
+        if (subscribedTokensRef.current.length > 0 && ws.readyState === WebSocket.OPEN) {
+          ws.send(
+            JSON.stringify({
+              type: 'subscribe',
+              channel: 'price',
+              tokens: subscribedTokensRef.current,
+              initialPrices: initialPricesRef.current,
+            })
+          );
         }
       };
 
@@ -125,6 +134,11 @@ export function useWebSocket(
       subscribedTokensRef.current = Array.from(
         new Set([...subscribedTokensRef.current, ...tokenAddresses])
       );
+      
+      // Store initial prices for reconnection
+      if (initialPrices) {
+        initialPricesRef.current = { ...initialPricesRef.current, ...initialPrices };
+      }
 
       if (wsRef.current?.readyState === WebSocket.OPEN) {
         wsRef.current.send(
@@ -132,7 +146,7 @@ export function useWebSocket(
             type: 'subscribe',
             channel: 'price',
             tokens: subscribedTokensRef.current,
-            initialPrices: initialPrices || {}, // Pass initial prices to avoid API calls
+            initialPrices: initialPricesRef.current,
           })
         );
       } else if (!wsRef.current || wsRef.current.readyState === WebSocket.CLOSED) {

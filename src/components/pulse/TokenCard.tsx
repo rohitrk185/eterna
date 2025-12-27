@@ -3,11 +3,10 @@
 import React, { memo, useState, useCallback, useMemo } from 'react';
 import Image from 'next/image';
 import { Token } from '@/types/token';
-import { useAppDispatch, useAppSelector } from '@/store/hooks';
+import { useAppDispatch } from '@/store/hooks';
 import { openModal, openPopover, setHoveredToken } from '@/store/slices/uiSlice';
 import { formatCompactNumber, formatPrice, formatPercentage, truncateAddress } from '@/lib/formatters';
 import { cn } from '@/lib/utils';
-import { usePriceAnimation } from '@/hooks/usePriceAnimation';
 import ProgressBar from './ProgressBar';
 import TokenPopover from './TokenPopover';
 
@@ -19,24 +18,13 @@ interface TokenCardProps {
 /**
  * TokenCard component - displays individual token information
  * Matches Axiom Trade's token card design
- * Optimized with useCallback and price animations
+ * Optimized with useCallback to prevent unnecessary re-renders
  */
 const TokenCard = memo(({ token, onHover }: TokenCardProps) => {
   const dispatch = useAppDispatch();
   const [imageError, setImageError] = useState(false);
-  
-  // Get previous price from Redux store for animation
-  const previousPrice = useAppSelector(
-    (state) => state.tokens.priceUpdates[token.address]
-  );
 
-  // Price animation hook for smooth transitions
-  const { colorClass: priceAnimationColor, isAnimating } = usePriceAnimation({
-    price: token.price,
-    previousPrice: previousPrice || undefined,
-  });
-
-  // Memoized event handlers with useCallback
+  // Memoized event handlers
   const handleClick = useCallback(() => {
     dispatch(openModal(token));
   }, [dispatch, token]);
@@ -50,7 +38,11 @@ const TokenCard = memo(({ token, onHover }: TokenCardProps) => {
   const handleMouseLeave = useCallback(() => {
     dispatch(setHoveredToken(null));
     onHover?.(null);
-  }, [onHover]);
+  }, [dispatch, onHover]);
+
+  const handleImageError = useCallback(() => {
+    setImageError(true);
+  }, []);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
@@ -59,17 +51,11 @@ const TokenCard = memo(({ token, onHover }: TokenCardProps) => {
     }
   }, [handleClick]);
 
-  const handleImageError = useCallback(() => {
-    setImageError(true);
-  }, []);
-
-  // Memoized price change color - use animation color if animating, otherwise use static color
-  const priceChangeColor = useMemo(() => {
-    if (isAnimating && priceAnimationColor) {
-      return priceAnimationColor;
-    }
-    return token.priceChange24h >= 0 ? 'text-green-500' : 'text-red-500';
-  }, [isAnimating, priceAnimationColor, token.priceChange24h]);
+  // Memoized price change color
+  const priceChangeColor = useMemo(() => 
+    token.priceChange24h >= 0 ? 'text-green-500' : 'text-red-500',
+    [token.priceChange24h]
+  );
 
   return (
     <TokenPopover token={token}>
@@ -81,14 +67,7 @@ const TokenCard = memo(({ token, onHover }: TokenCardProps) => {
         role="button"
         tabIndex={0}
         onKeyDown={handleKeyDown}
-        aria-label={`View details for ${token.name} token. Price: $${formatPrice(token.price)}, 24h change: ${formatPercentage(token.priceChange24h)}`}
-        aria-describedby={`token-${token.id}-description`}
       >
-      {/* Hidden description for screen readers */}
-      <div id={`token-${token.id}-description`} className="sr-only">
-        {token.name} token, Market Cap: ${formatCompactNumber(token.marketCap)}, Volume: ${formatCompactNumber(token.volume)}, Transactions: {token.transactionCount}
-      </div>
-      
       {/* Token Header */}
       <div className="flex items-start justify-between mb-2">
         <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -97,14 +76,12 @@ const TokenCard = memo(({ token, onHover }: TokenCardProps) => {
             {token.imageUrl && !imageError ? (
               <Image
                 src={token.imageUrl}
-                alt={`${token.name} logo`}
+                alt={token.name}
                 fill
                 sizes="32px"
                 className="object-cover"
                 loading="lazy"
                 onError={handleImageError}
-                quality={85}
-                unoptimized={false}
               />
             ) : (
               <div className="h-full w-full bg-muted flex items-center justify-center text-xs text-muted-foreground">
@@ -131,15 +108,10 @@ const TokenCard = memo(({ token, onHover }: TokenCardProps) => {
 
         {/* Price and Change */}
         <div className="flex flex-col items-end ml-2">
-          <div 
-            className={cn(
-              'text-sm font-medium transition-colors duration-300',
-              isAnimating ? priceAnimationColor || 'text-foreground' : 'text-foreground'
-            )}
-          >
+          <div className="text-sm font-medium text-foreground">
             ${formatPrice(token.price)}
           </div>
-          <div className={cn('text-xs transition-colors duration-300', priceChangeColor)}>
+          <div className={cn('text-xs', priceChangeColor)}>
             {formatPercentage(token.priceChange24h)}
           </div>
         </div>

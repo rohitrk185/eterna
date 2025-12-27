@@ -126,14 +126,11 @@ export function useTokenData(
     }
   }, [isError, error, dispatch]);
 
+  // Memoize the return value to avoid re-creating tokens array on every render
+  // The actual tokens are already stored in Redux, so we return an empty array here
+  // Components should use useAppSelector to get tokens from Redux store
   return {
-    tokens: data?.success && data.data?.tokens
-      ? data.data.tokens
-          .map((birdeyeToken) =>
-            mapBirdeyeToToken(birdeyeToken, category || 'new-pairs')
-          )
-          .filter((token) => (category ? token.category === category : true))
-      : [],
+    tokens: [], // Tokens are in Redux store, accessed via useAppSelector
     isLoading,
     isError,
     error: error as Error | null,

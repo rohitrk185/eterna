@@ -7,36 +7,20 @@ const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
   variable: "--font-geist-sans",
   weight: "100 900",
-  display: "swap", // Optimize font loading - show fallback until font loads
-  preload: true, // Preload fonts for better performance
+  display: "swap", // Optimize font loading - prevents FOIT
+  preload: true,
 });
 const geistMono = localFont({
   src: "./fonts/GeistMonoVF.woff",
   variable: "--font-geist-mono",
   weight: "100 900",
-  display: "swap", // Optimize font loading
+  display: "swap", // Optimize font loading - prevents FOIT
   preload: true,
 });
 
 export const metadata: Metadata = {
   title: "Axiom Trade - Pulse",
-  description: "Real-time token discovery and trading table",
-  keywords: ["crypto", "tokens", "trading", "solana", "defi"],
-  // Optimize for Lighthouse
-  openGraph: {
-    title: "Axiom Trade - Pulse",
-    description: "Real-time token discovery and trading table",
-    type: "website",
-  },
-  // Prevent indexing if needed (remove if you want SEO)
-  robots: {
-    index: true,
-    follow: true,
-  },
-  // Performance optimizations
-  other: {
-    'x-dns-prefetch-control': 'on',
-  },
+  description: "Token discovery and trading table",
 };
 
 export default function RootLayout({
@@ -45,7 +29,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

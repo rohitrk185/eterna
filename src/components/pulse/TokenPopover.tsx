@@ -19,15 +19,18 @@ interface TokenPopoverProps {
 /**
  * TokenPopover component - Quick token details on hover
  * Shows price, 24h change, volume, and market cap
+ * Optimized to avoid unnecessary renders
  */
 const TokenPopover = memo(({ children, token }: TokenPopoverProps) => {
+  // Use shallow selector to reduce re-renders
   const isPopoverOpen = useAppSelector((state) => state.ui.isPopoverOpen);
-  const popoverToken = useAppSelector((state) => state.ui.popoverToken);
+  const popoverTokenId = useAppSelector((state) => state.ui.popoverToken?.id);
 
-  // Only show popover if token matches
-  const shouldShow = isPopoverOpen && popoverToken?.id === token?.id;
+  // Only show popover if token matches - avoid creating new object
+  const shouldShow = isPopoverOpen && popoverTokenId === token?.id;
 
-  if (!token) {
+  // Early return for non-matching popovers - avoid rendering Popover at all
+  if (!token || !shouldShow) {
     return <>{children}</>;
   }
 
@@ -35,7 +38,7 @@ const TokenPopover = memo(({ children, token }: TokenPopoverProps) => {
     token.priceChange24h >= 0 ? 'text-green-500' : 'text-red-500';
 
   return (
-    <Popover open={shouldShow}>
+    <Popover open={true}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
       <PopoverContent
         className="w-64 p-3"
