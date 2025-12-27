@@ -1,6 +1,6 @@
 'use client';
 
-import React, { memo } from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import { TokenCategory, SortField } from '@/types/token';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { setSortField } from '@/store/slices/sortSlice';
@@ -116,11 +116,17 @@ const ColumnHeader = memo(
       (state) => state.sort.sortConfigs[category]
     );
 
-    const handleSortClick = (field: SortField) => {
+    // Memoized handlers
+    const handleSortClick = useCallback((field: SortField) => {
       dispatch(setSortField({ category, field }));
-    };
+    }, [dispatch, category]);
 
-    const categoryLabel = categoryLabels[category];
+    const handlePageChange = useCallback((page: number) => {
+      onPageChange?.(page);
+    }, [onPageChange]);
+
+    // Memoized values
+    const categoryLabel = useMemo(() => categoryLabels[category], [category]);
 
     return (
       <div className="flex flex-col gap-2 p-3 border-b border-border bg-card">
@@ -162,7 +168,7 @@ const ColumnHeader = memo(
                 variant={currentPage === page ? 'default' : 'ghost'}
                 size="sm"
                 className="h-6 px-2 text-xs"
-                onClick={() => onPageChange?.(page)}
+                onClick={() => handlePageChange(page)}
                 aria-label={`Page ${page}`}
               >
                 P{page}
@@ -179,8 +185,9 @@ const ColumnHeader = memo(
                 size="icon"
                 className="h-6 w-6"
                 onClick={() => handleSortClick('price')}
-                title="Sort by price"
-                aria-label="Sort by price"
+                title="Sort by price ascending"
+                aria-label="Sort by price ascending"
+                aria-pressed={sortConfig.field === 'price' && sortConfig.direction === 'asc'}
               >
                 <SortUpIcon
                   className={cn(
@@ -196,8 +203,9 @@ const ColumnHeader = memo(
                 size="icon"
                 className="h-6 w-6"
                 onClick={() => handleSortClick('price')}
-                title="Sort by price"
-                aria-label="Sort by price"
+                title="Sort by price descending"
+                aria-label="Sort by price descending"
+                aria-pressed={sortConfig.field === 'price' && sortConfig.direction === 'desc'}
               >
                 <SortDownIcon
                   className={cn(

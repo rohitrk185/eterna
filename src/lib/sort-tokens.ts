@@ -1,4 +1,4 @@
-import { Token, SortConfig, SortField } from '@/types/token';
+import { Token, SortConfig } from '@/types/token';
 
 /**
  * Sort tokens based on configuration

@@ -56,9 +56,9 @@ export function useTokenData(
   } = useQuery<BirdeyeTokenListResponse>({
     queryKey,
     queryFn: async () => {
+      // Note: Birdeye API doesn't support sort_by parameter
       const params = new URLSearchParams({
         chain,
-        sort_by: sortBy,
         limit: String(limit),
         offset: String(offset),
       });
@@ -66,10 +66,20 @@ export function useTokenData(
       const response = await fetch(`/api/tokens/list?${params}`);
       
       if (!response.ok) {
-        throw new Error(`Failed to fetch tokens: ${response.statusText}`);
+        const errorData = await response.json().catch(() => ({
+          error: `HTTP ${response.status}: ${response.statusText}`,
+        }));
+        throw new Error(errorData.error || `Failed to fetch tokens: ${response.statusText}`);
       }
 
-      return response.json();
+      const data = await response.json();
+      
+      // Handle API error responses
+      if (data.success === false) {
+        throw new Error(data.error || 'Failed to fetch tokens');
+      }
+
+      return data;
     },
     enabled,
     staleTime: 60 * 1000, // 30 seconds
@@ -81,16 +91,24 @@ export function useTokenData(
   // Map Birdeye tokens to our Token interface and update Redux
   useEffect(() => {
     if (data?.success && data.data?.tokens) {
-      const tokens: Token[] = data.data.tokens.map((birdeyeToken) =>
-        mapBirdeyeToToken(birdeyeToken, category || 'new-pairs')
-      );
+      // Distribute tokens across categories evenly
+      const tokens: Token[] = data.data.tokens.map((birdeyeToken, index) => {
+        // Distribute tokens across 3 categories
+        const categoryIndex = index % 3;
+        const categories: TokenCategory[] = ['new-pairs', 'final-stretch', 'migrated'];
+        const tokenCategory = categories[categoryIndex];
+        return mapBirdeyeToToken(birdeyeToken, tokenCategory);
+      });
 
-      // Filter by category if specified
-      const filteredTokens = category
-        ? tokens.filter((token) => token.category === category)
-        : tokens;
-
-      dispatch(setTokens(filteredTokens));
+      // Only update Redux if this is the first query (no category filter)
+      // This prevents overwriting tokens when multiple queries complete
+      if (!category) {
+        dispatch(setTokens(tokens));
+      } else {
+        // If category is specified, merge with existing tokens
+        // But since we're fetching all at once now, this shouldn't happen
+        dispatch(setTokens(tokens));
+      }
     }
   }, [data, category, dispatch]);
 

@@ -50,15 +50,15 @@ export function mapBirdeyeToToken(
     symbol: birdeyeToken.symbol,
     imageUrl: birdeyeToken.logoURI || '',
     timeAgo,
-    marketCap: birdeyeToken.marketCap || birdeyeToken.fdv,
-    volume: birdeyeToken.volume24h,
+    marketCap: birdeyeToken.marketCap || birdeyeToken.mc || birdeyeToken.fdv || 0,
+    volume: birdeyeToken.volume24h || birdeyeToken.v24hUSD || 0,
     ratios,
     feeFactor,
     transactionCount,
     pumpAddress,
     progressSegments,
     price: birdeyeToken.price,
-    priceChange24h: birdeyeToken.priceChange24h,
+    priceChange24h: birdeyeToken.priceChange24h || birdeyeToken.v24hChangePercent || 0,
     category,
     createdAt: Date.now() - Math.floor(Math.random() * 86400000), // Random time in last 24h
   };

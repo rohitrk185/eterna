@@ -1,4 +1,4 @@
-import { WebSocketPriceUpdate } from '@/types/token';
+// WebSocket types are defined in token.ts but not directly used here
 
 /**
  * Mock WebSocket message interface
@@ -75,7 +75,7 @@ export class MockWebSocket {
         const vol = this.volatility.get(address) || 0.02; // Default 2% volatility
 
         // Generate realistic price change using random walk
-        const changePercent = this.generatePriceChange(vol, history);
+        const changePercent = this.generatePriceChange(vol);
         const newPrice = Math.max(0.000001, currentPrice * (1 + changePercent));
 
         // Update stored price
@@ -126,7 +126,7 @@ export class MockWebSocket {
   /**
    * Generate realistic price change using normal distribution
    */
-  private generatePriceChange(volatility: number, history: number[]): number {
+  private generatePriceChange(volatility: number): number {
     // Use Box-Muller transform for normal distribution
     const u1 = Math.random();
     const u2 = Math.random();
@@ -146,8 +146,15 @@ export class MockWebSocket {
     }
 
     try {
-      const message =
-        typeof data === 'string' ? JSON.parse(data) : JSON.parse(data as any);
+      let message: { type?: string; channel?: string; tokens?: string[] };
+      if (typeof data === 'string') {
+        message = JSON.parse(data);
+      } else {
+        // For ArrayBuffer/Blob, convert to string first
+        const textDecoder = new TextDecoder();
+        const text = textDecoder.decode(data as ArrayBuffer);
+        message = JSON.parse(text);
+      }
 
       // Handle subscription messages
       if (message.type === 'subscribe' && message.channel === 'price') {

@@ -104,12 +104,18 @@ export interface BirdeyeTokenOverview {
   decimals: number;
   logoURI: string;
   price: number;
-  priceChange24h: number;
-  volume24h: number;
-  marketCap: number;
+  priceChange24h?: number;
+  v24hChangePercent?: number; // Alternative field name from API
+  volume24h?: number;
+  v24hUSD?: number; // Alternative field name from API
+  marketCap?: number;
+  mc?: number; // Alternative field name from API
   liquidity: number;
-  fdv: number; // Fully diluted valuation
-  holder: number;
+  fdv?: number; // Fully diluted valuation
+  holder?: number;
+  lastTradeUnixTime?: number;
+  isScaledUiToken?: boolean;
+  multiplier?: number | null;
 }
 
 export interface BirdeyeTokenListResponse {
