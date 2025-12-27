@@ -46,12 +46,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <head>
-        {/* Preconnect to external API for faster connection establishment */}
-        <link rel="preconnect" href="https://public-api.birdeye.so" crossOrigin="anonymous" />
-        {/* DNS prefetch for additional performance */}
-        <link rel="dns-prefetch" href="https://public-api.birdeye.so" />
-      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

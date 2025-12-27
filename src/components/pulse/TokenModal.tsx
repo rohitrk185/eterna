@@ -1,6 +1,6 @@
 'use client';
 
-import React, { memo } from 'react';
+import React, { memo, useState, useCallback } from 'react';
 import Image from 'next/image';
 import { useAppSelector, useAppDispatch } from '@/store/hooks';
 import { closeModal } from '@/store/slices/uiSlice';
@@ -29,10 +29,15 @@ const TokenModal = memo(() => {
   const dispatch = useAppDispatch();
   const isOpen = useAppSelector((state) => state.ui.isModalOpen);
   const token = useAppSelector((state) => state.ui.selectedToken);
+  const [imageError, setImageError] = useState(false);
 
   const handleClose = () => {
     dispatch(closeModal());
   };
+
+  const handleImageError = useCallback(() => {
+    setImageError(true);
+  }, []);
 
   if (!token) {
     return null;
@@ -48,7 +53,7 @@ const TokenModal = memo(() => {
           <div className="flex items-center gap-3">
             {/* Token Image */}
             <div className="relative h-12 w-12 rounded-full overflow-hidden bg-muted flex-shrink-0">
-              {token.imageUrl ? (
+              {token.imageUrl && !imageError ? (
                 <Image
                   src={token.imageUrl}
                   alt={`${token.name} logo`}
@@ -57,6 +62,7 @@ const TokenModal = memo(() => {
                   className="object-cover"
                   loading="eager"
                   quality={90}
+                  onError={handleImageError}
                 />
               ) : (
                 <div className="h-full w-full bg-muted flex items-center justify-center text-sm font-medium">

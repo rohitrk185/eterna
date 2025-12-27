@@ -104,6 +104,7 @@ const TokenCard = memo(({ token, onHover }: TokenCardProps) => {
                 loading="lazy"
                 onError={handleImageError}
                 quality={85}
+                unoptimized={false}
               />
             ) : (
               <div className="h-full w-full bg-muted flex items-center justify-center text-xs text-muted-foreground">

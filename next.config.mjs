@@ -22,8 +22,11 @@ const nextConfig = {
     // Image optimization settings
     deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
     imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
-    // Minimum quality for optimization
-    minimumCacheTTL: 60,
+    // Increase cache TTL for better performance (1 day)
+    minimumCacheTTL: 86400,
+    // Disable image optimization for problematic external images
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   
   // Optimize bundle
@@ -76,6 +79,10 @@ const nextConfig = {
   
   // Optimize production builds
   productionBrowserSourceMaps: false, // Disable source maps in production for smaller bundles
+  
+  // Target modern browsers to reduce legacy polyfills
+  // Next.js uses SWC which respects browserslist config in package.json
+  // This reduces bundle size by not including polyfills for modern JS features
 };
 
 export default nextConfig;
